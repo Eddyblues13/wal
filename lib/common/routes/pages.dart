@@ -1,7 +1,9 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:wal/common/apis/dashboard_api.dart';
 import 'package:wal/common/routes/names.dart';
+import 'package:wal/common/utils/http_util.dart';
 import 'package:wal/global.dart';
 import 'package:wal/pages/dashboard/bloc/dashboard_bloc.dart';
 import 'package:wal/pages/dashboard/dashoard.dart';
@@ -30,11 +32,12 @@ class AppPages {
         page: const SignUp(),
         bloc: BlocProvider(create: (_) => SignUpBloc()),
       ),
-
       PageEntity(
         route: AppRoutes.DASHBOARD,
         page: const Dashboard(),
-        bloc: BlocProvider(create: (_) => DashboardBloc()),
+        bloc: BlocProvider(create: (_) => DashboardBloc(
+          dashboardAPI: DashboardAPI(httpUtil: HttpUtil())
+        )),
       ),
     ];
   }

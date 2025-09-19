@@ -1,7 +1,7 @@
-// sign_up.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lottie/lottie.dart';
 import 'package:wal/pages/sign_up/bloc/sign_up_bloc.dart';
 import 'package:wal/pages/sign_up/bloc/sign_up_event.dart';
 import 'package:wal/pages/sign_up/bloc/sign_up_state.dart';
@@ -29,10 +29,17 @@ class _SignUpState extends State<SignUp> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // 🔹 Lottie Animation (Sign Up theme)
+                    Center(
+                      child: Lottie.network(
+                        "https://assets2.lottiefiles.com/packages/lf20_q5pk6p1k.json",
+                        height: 150.h,
+                      ),
+                    ),
                     buildHeaderText(),
                     Container(
-                      margin: EdgeInsets.only(top: 40.h),
-                      padding: EdgeInsets.only(left: 25.w, right: 25.w),
+                      margin: EdgeInsets.only(top: 20.h),
+                      padding: EdgeInsets.symmetric(horizontal: 25.w),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -42,9 +49,9 @@ class _SignUpState extends State<SignUp> {
                             "text",
                             "user",
                             (value) {
-                              context.read<SignUpBloc>().add(
-                                FirstNameEvent(value),
-                              );
+                              context
+                                  .read<SignUpBloc>()
+                                  .add(FirstNameEvent(value));
                             },
                           ),
                           reusableText("Last Name"),
@@ -53,9 +60,9 @@ class _SignUpState extends State<SignUp> {
                             "text",
                             "user",
                             (value) {
-                              context.read<SignUpBloc>().add(
-                                LastNameEvent(value),
-                              );
+                              context
+                                  .read<SignUpBloc>()
+                                  .add(LastNameEvent(value));
                             },
                           ),
                           reusableText("Email"),
@@ -73,9 +80,9 @@ class _SignUpState extends State<SignUp> {
                             "password",
                             "lock",
                             (value) {
-                              context.read<SignUpBloc>().add(
-                                PasswordEvent(value),
-                              );
+                              context
+                                  .read<SignUpBloc>()
+                                  .add(PasswordEvent(value));
                             },
                             isPassword: true,
                           ),
@@ -85,9 +92,9 @@ class _SignUpState extends State<SignUp> {
                             "password",
                             "lock",
                             (value) {
-                              context.read<SignUpBloc>().add(
-                                ConfirmPasswordEvent(value),
-                              );
+                              context
+                                  .read<SignUpBloc>()
+                                  .add(ConfirmPasswordEvent(value));
                             },
                             isPassword: true,
                           ),
@@ -112,7 +119,7 @@ class _SignUpState extends State<SignUp> {
   AppBar buildAppBar() {
     return AppBar(
       leading: IconButton(
-        icon: Icon(Icons.arrow_back, color: Colors.black),
+        icon: const Icon(Icons.arrow_back, color: Colors.black),
         onPressed: () => Navigator.pop(context),
       ),
       backgroundColor: Colors.white,
@@ -122,7 +129,7 @@ class _SignUpState extends State<SignUp> {
 
   Widget buildHeaderText() {
     return Container(
-      padding: EdgeInsets.only(left: 25.w, top: 20.h),
+      padding: EdgeInsets.only(left: 25.w, top: 10.h),
       child: Text(
         "Create Account",
         style: TextStyle(
@@ -169,7 +176,7 @@ class _SignUpState extends State<SignUp> {
     return Container(
       width: 300.w,
       height: 50.h,
-      margin: EdgeInsets.only(left: 25.w, right: 25.w),
+      margin: EdgeInsets.symmetric(horizontal: 25.w),
       child: ElevatedButton(
         onPressed: onTap,
         style: ElevatedButton.styleFrom(

@@ -43,7 +43,9 @@ dependencies:
   shared_preferences:
   flutter_secure_storage:
   dio:
-  fluttertoast:
+  fluttertoast: ^8.2.14
+  lottie: ^3.3.2
+
 
 dev_dependencies:
   flutter_test:

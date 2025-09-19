@@ -2,6 +2,7 @@ import 'package:dots_indicator/dots_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lottie/lottie.dart';
 
 import 'bloc/welcome_blocs.dart';
 import 'bloc/welcome_events.dart';
@@ -45,28 +46,26 @@ class _WelcomeState extends State<Welcome> {
                       "Enable Notifications",
                       "Keep up with the market!",
                       "Turn on notifications to keep track of prices and receive transaction updates.",
-                      "assets/images/notification_illustration.png",
+                      "https://assets8.lottiefiles.com/packages/lf20_h4th9ofg.json", // 🔔 Notification animation
                       buttonColor: Colors.greenAccent.shade400,
                       showSecondaryButton: true,
                       secondaryButtonText: "Skip, I'll do it later",
                       onSecondaryButtonTap: () {
                         // Skip action
-                        // Implement navigation or logic here
                       },
                     ),
                     _page(
                       2,
                       context,
                       "Create new wallet",
-                      "Unlock opportunities across 100+ chains",
+                      "Own, control and leverage the power of your digital assets",
                       "By tapping any button you agree and consent to our Terms of Service and Privacy Policy.",
-                      "assets/images/wallet_illustration.png",
+                      "https://assets1.lottiefiles.com/packages/lf20_2glqweqs.json", // 💳 Wallet creation animation
                       buttonColor: Colors.greenAccent.shade400,
                       showSecondaryButton: true,
                       secondaryButtonText: "I already have a wallet",
                       onSecondaryButtonTap: () {
                         // Already have wallet action
-                        // Implement navigation or logic here
                       },
                     ),
                     _page(
@@ -75,13 +74,12 @@ class _WelcomeState extends State<Welcome> {
                       "Fund your wallet",
                       "Brilliant, your wallet is ready!",
                       "Add funds to get started",
-                      "assets/images/wallet_ready_illustration.png",
+                      "https://assets2.lottiefiles.com/packages/lf20_9s8p3s.json", // ✅ Wallet ready animation
                       buttonColor: Colors.greenAccent.shade400,
                       showSecondaryButton: true,
                       secondaryButtonText: "Skip",
                       onSecondaryButtonTap: () {
                         // Skip funding action
-                        // Implement navigation or logic here
                       },
                     ),
                   ],
@@ -117,7 +115,7 @@ class _WelcomeState extends State<Welcome> {
     String buttonName,
     String title,
     String subTitle,
-    String imagePath, {
+    String animationUrl, {
     Color buttonColor = Colors.green,
     bool showSecondaryButton = false,
     String? secondaryButtonText,
@@ -131,9 +129,14 @@ class _WelcomeState extends State<Welcome> {
           SizedBox(
             width: 250.w,
             height: 250.w,
-            child: Image.asset(
-              imagePath,
+            child: Lottie.network(
+              animationUrl,
               fit: BoxFit.contain,
+              repeat: true,
+              animate: true,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(Icons.error, color: Colors.red);
+              },
             ),
           ),
           SizedBox(height: 20.h),
@@ -179,7 +182,6 @@ class _WelcomeState extends State<Welcome> {
                   curve: Curves.easeIn,
                 );
               } else {
-                // Last page action, e.g., navigate to home or sign in
                 Global.storageService.setBool(
                     AppConstants.STORAGE_DEVICE_OPEN_FIRST_TIME, true);
                 Navigator.of(context)

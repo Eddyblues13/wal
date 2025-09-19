@@ -1,7 +1,7 @@
-// sign_in.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:lottie/lottie.dart';
 import 'package:wal/pages/sign_in/bloc/sign_in_bloc.dart';
 import 'package:wal/pages/sign_in/bloc/sign_in_event.dart';
 import 'package:wal/pages/sign_in/bloc/sign_in_state.dart';
@@ -31,13 +31,21 @@ class _SignInState extends State<SignIn> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          // 🔹 Lottie Animation (Login theme)
+                          Center(
+                            child: Lottie.network(
+                              "https://assets10.lottiefiles.com/packages/lf20_jcikwtux.json",
+                              height: 150.h,
+                            ),
+                          ),
                           buildThirdPartyLogin(context),
                           Center(
                             child: reusableText(
-                                "Or use your email account to login"),
+                              "Or use your email account to login",
+                            ),
                           ),
                           Container(
-                            margin: EdgeInsets.only(top: 60.h),
+                            margin: EdgeInsets.only(top: 20.h),
                             padding: EdgeInsets.symmetric(horizontal: 25.w),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,7 +93,6 @@ class _SignInState extends State<SignIn> {
     );
   }
 
-  // 🔹 Example AppBar
   AppBar buildAppBar() {
     return AppBar(
       backgroundColor: Colors.white,
@@ -98,7 +105,6 @@ class _SignInState extends State<SignIn> {
     );
   }
 
-  // 🔹 Example reusableText
   Widget reusableText(String text) {
     return Padding(
       padding: EdgeInsets.only(top: 15.h, bottom: 5.h),
@@ -109,7 +115,6 @@ class _SignInState extends State<SignIn> {
     );
   }
 
-  // 🔹 Example TextField builder
   Widget buildTextField(
     String hintText,
     String type,
@@ -119,7 +124,7 @@ class _SignInState extends State<SignIn> {
     return Container(
       margin: EdgeInsets.only(top: 10.h, bottom: 20.h),
       child: TextField(
-        obscureText: type == "password" ? true : false,
+        obscureText: type == "password",
         onChanged: onChanged,
         decoration: InputDecoration(
           prefixIcon: Icon(
@@ -135,7 +140,6 @@ class _SignInState extends State<SignIn> {
     );
   }
 
-  // 🔹 Example forgot password widget
   Widget forgotPassword() {
     return Container(
       alignment: Alignment.centerRight,
@@ -152,7 +156,6 @@ class _SignInState extends State<SignIn> {
     );
   }
 
-  // 🔹 Example login/register button
   Widget buildLogInAndRegButton(
     String buttonText,
     String type,
@@ -177,14 +180,13 @@ class _SignInState extends State<SignIn> {
     );
   }
 
-  // 🔹 Example third-party login placeholder
   Widget buildThirdPartyLogin(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(top: 30.h, bottom: 20.h),
+      margin: EdgeInsets.only(top: 20.h, bottom: 20.h),
       alignment: Alignment.center,
       child: ElevatedButton.icon(
         onPressed: () {
-          // e.g., Google login
+          // Add Google login logic
         },
         icon: const Icon(Icons.g_mobiledata, color: Colors.white),
         label: const Text("Sign in with Google"),
