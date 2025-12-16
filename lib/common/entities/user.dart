@@ -1,140 +1,273 @@
-// user.dart
 class LoginRequestEntity {
-  int? type;
-  String? name;
-  String? description;
-  String? email;
-  String? phone;
-  String? avatar;
-  String? open_id;
-  int? online;
-  String? password; // Add password field
+  final String username;
+  final String password;
 
-  LoginRequestEntity({
-    this.type,
-    this.name,
-    this.description,
-    this.email,
-    this.phone,
-    this.avatar,
-    this.open_id,
-    this.online,
-    this.password, // Add password field
-  });
+  const LoginRequestEntity({required this.username, required this.password});
 
-  Map<String, dynamic> toJson() => {
-    "type": type,
-    "name": name,
-    "description": description,
-    "email": email,
-    "phone": phone,
-    "avatar": avatar,
-    "open_id": open_id,
-    "online": online,
-    "password": password, // Add password field
-  };
+  Map<String, dynamic> toJson() => {"username": username, "password": password};
 }
 
-//api post response msg
+// UPDATED: Login Response Entity for your PHP API with wallet and mnemonic
 class UserLoginResponseEntity {
-  int? code;
-  String? msg;
-  UserItem? data;
+  final String status; // "success" or "error" from your API
+  final String report; // Message from server
+  final String wallet; // Wallet address from API
+  final String mnemonic; // Mnemonic phrase from API
 
-  UserLoginResponseEntity({this.code, this.msg, this.data});
+  UserLoginResponseEntity({
+    required this.status,
+    required this.report,
+    required this.wallet,
+    required this.mnemonic,
+  });
 
   factory UserLoginResponseEntity.fromJson(Map<String, dynamic> json) =>
       UserLoginResponseEntity(
-        code: json["code"],
-        msg: json["msg"],
-        data: UserItem.fromJson(json["data"]),
+        status: json["Status"] ?? "error", // Capital 'S' from your API
+        report: json["Report"] ?? "", // Capital 'R' from your API
+        wallet: json["wallet"] ?? "", // Wallet address
+        mnemonic: json["mnemonic"] ?? "", // Mnemonic phrase
       );
+
+  // Helper getter to check if successful - handles typo "succcess" in your API
+  bool get isSuccess =>
+      status.toLowerCase() == "success" ||
+      status.toLowerCase() == "succcess"; // Handle the typo in your API
+
+  // For compatibility with existing code
+  int? get code => isSuccess ? 200 : 400;
+  String? get msg => report;
 }
 
-// login result
-class UserItem {
-  String? access_token;
-  String? token;
-  String? name;
-  String? description;
-  String? avatar;
-  int? online;
-  String? type;
-  String? email; // Add email field
-
-  UserItem({
-    this.access_token,
-    this.token,
-    this.name,
-    this.description,
-    this.avatar,
-    this.online,
-    this.type,
-    this.email, // Add email field
-  });
-
-  factory UserItem.fromJson(Map<String, dynamic> json) => UserItem(
-    access_token: json["access_token"],
-    token: json["token"],
-    name: json["name"],
-    description: json["description"],
-    avatar: json["avatar"],
-    online: json["online"],
-    type: json["type"],
-    email: json["email"], // Add email field
-  );
-
-  Map<String, dynamic> toJson() => {
-    "access_token": access_token,
-    "token": token,
-    "name": name,
-    "description": description,
-    "avatar": avatar,
-    "online": online,
-    "type": type,
-    "email": email, // Add email field
-  };
-}
-
-// user.dart - Add these classes to your existing user.dart file
+// UPDATED: Register Request Entity for your PHP API
 class RegisterRequestEntity {
-  String? name;
-  String? firstName;
-  String? lastName;
-  String? email;
-  String? password;
-  String? confirmPassword;
+  final String username;
+  final String email;
+  final String password;
+  final String firstName;
+  final String lastName;
 
   RegisterRequestEntity({
-    this.name,
-    this.firstName,
-    this.lastName,
-    this.email,
-    this.password,
-    this.confirmPassword,
+    required this.username,
+    required this.email,
+    required this.password,
+    required this.firstName,
+    required this.lastName,
   });
 
   Map<String, dynamic> toJson() => {
-    "name": name,
-    "first_name": firstName,
-    "last_name": lastName,
+    "username": username,
     "email": email,
     "password": password,
-    "password_confirmation": confirmPassword,
+    "first_name": firstName,
+    "last_name": lastName,
   };
 }
 
+// UPDATED: Register Response Entity for your PHP API
 class RegisterResponseEntity {
-  int? code;
-  String? msg;
-  UserItem? data;
+  final String status; // "success" or "error" from your API
+  final String report; // Message from server
+  final Map<String, dynamic>? data;
+  final String? wallet; // Optional wallet for registration
+  final String? mnemonic; // Optional mnemonic for registration
 
-  RegisterResponseEntity({this.code, this.msg, this.data});
+  RegisterResponseEntity({
+    required this.status,
+    required this.report,
+    this.data,
+    this.wallet,
+    this.mnemonic,
+  });
 
   factory RegisterResponseEntity.fromJson(Map<String, dynamic> json) =>
       RegisterResponseEntity(
-        code: json["code"],
-        msg: json["msg"],
-        data: json["data"] != null ? UserItem.fromJson(json["data"]) : null,
+        status: json["Status"] ?? "error", // Capital 'S' from your API
+        report: json["Report"] ?? "", // Capital 'R' from your API
+        data: json["data"],
+        wallet: json["wallet"], // Wallet if provided during registration
+        mnemonic: json["mnemonic"], // Mnemonic if provided during registration
       );
+
+  // Helper getter to check if successful - handles typo "succcess" in your API
+  bool get isSuccess =>
+      status.toLowerCase() == "success" ||
+      status.toLowerCase() == "succcess"; // Handle the typo in your API
+
+  // For compatibility with existing code
+  int? get code => isSuccess ? 200 : 400;
+  String? get msg => report;
+}
+
+// UPDATED: Forgot Password Request Entity for your PHP API
+class ForgotPasswordRequestEntity {
+  final String email;
+
+  ForgotPasswordRequestEntity({required this.email});
+
+  Map<String, dynamic> toJson() => {"email": email};
+}
+
+// UPDATED: Forgot Password Response Entity for your PHP API
+class ForgotPasswordResponseEntity {
+  final String status; // "success" or "error" from your API
+  final String report; // Message from server
+  final dynamic data;
+
+  ForgotPasswordResponseEntity({
+    required this.status,
+    required this.report,
+    this.data,
+  });
+
+  factory ForgotPasswordResponseEntity.fromJson(Map<String, dynamic> json) =>
+      ForgotPasswordResponseEntity(
+        status: json["Status"] ?? "error", // Capital 'S' from your API
+        report: json["Report"] ?? "", // Capital 'R' from your API
+        data: json["data"],
+      );
+
+  // Helper getter to check if successful - handles typo "succcess" in your API
+  bool get isSuccess =>
+      status.toLowerCase() == "success" ||
+      status.toLowerCase() == "succcess"; // Handle the typo in your API
+
+  // For compatibility with existing code
+  int? get code => isSuccess ? 200 : 400;
+  String? get msg => report;
+}
+
+// UPDATED: User Data Model with wallet support
+class UserItem {
+  final String? token;
+  final String? username;
+  final String? email;
+  final String? wallet; // Added wallet field
+  final String? mnemonic; // Added mnemonic field
+  final DateTime? loginTime;
+
+  UserItem({
+    this.token,
+    this.username,
+    this.email,
+    this.wallet,
+    this.mnemonic,
+    this.loginTime,
+  });
+
+  factory UserItem.fromJson(Map<String, dynamic> json) => UserItem(
+    token: json["token"],
+    username: json["username"],
+    email: json["email"],
+    wallet: json["wallet"],
+    mnemonic: json["mnemonic"],
+    loginTime: json["login_time"] != null
+        ? DateTime.parse(json["login_time"])
+        : null,
+  );
+
+  Map<String, dynamic> toJson() => {
+    "token": token,
+    "username": username,
+    "email": email,
+    "wallet": wallet,
+    "mnemonic": mnemonic,
+    "login_time": loginTime?.toIso8601String(),
+  };
+
+  // Helper method to check if user has wallet data
+  bool get hasWallet => wallet != null && wallet!.isNotEmpty;
+
+  // Helper method to get shortened wallet address for display
+  String get displayWallet {
+    if (wallet == null || wallet!.isEmpty) return "No Wallet";
+    if (wallet!.length <= 12) return wallet!;
+    return "${wallet!.substring(0, 6)}...${wallet!.substring(wallet!.length - 6)}";
+  }
+}
+
+// NEW: Wallet-specific entity for handling wallet operations
+class WalletEntity {
+  final String address;
+  final String mnemonic;
+  final DateTime? createdAt;
+  final bool isBackedUp;
+
+  WalletEntity({
+    required this.address,
+    required this.mnemonic,
+    this.createdAt,
+    this.isBackedUp = false,
+  });
+
+  factory WalletEntity.fromJson(Map<String, dynamic> json) => WalletEntity(
+    address: json["address"] ?? "",
+    mnemonic: json["mnemonic"] ?? "",
+    createdAt: json["created_at"] != null
+        ? DateTime.parse(json["created_at"])
+        : null,
+    isBackedUp: json["is_backed_up"] ?? false,
+  );
+
+  Map<String, dynamic> toJson() => {
+    "address": address,
+    "mnemonic": mnemonic,
+    "created_at": createdAt?.toIso8601String(),
+    "is_backed_up": isBackedUp,
+  };
+
+  // Helper method to get shortened address for display
+  String get displayAddress {
+    if (address.length <= 12) return address;
+    return "${address.substring(0, 6)}...${address.substring(address.length - 6)}";
+  }
+
+  // Security: Method to get masked mnemonic for display
+  String get maskedMnemonic {
+    if (mnemonic.isEmpty) return "";
+    final words = mnemonic.split(' ');
+    if (words.length <= 2) return "•••";
+
+    final masked = List<String>.filled(words.length, '•••');
+    masked[0] = words[0];
+    masked[words.length - 1] = words[words.length - 1];
+
+    return masked.join(' ');
+  }
+}
+
+// NEW: API Response wrapper for consistent response handling
+class ApiResponseEntity<T> {
+  final bool success;
+  final String message;
+  final T? data;
+  final int? statusCode;
+  final String? error;
+
+  ApiResponseEntity({
+    required this.success,
+    required this.message,
+    this.data,
+    this.statusCode,
+    this.error,
+  });
+
+  factory ApiResponseEntity.fromJson(
+    Map<String, dynamic> json,
+    T Function(Map<String, dynamic>)? fromJsonT,
+  ) {
+    T? data;
+    if (fromJsonT != null && json['data'] != null) {
+      data = fromJsonT(json['data']);
+    }
+
+    return ApiResponseEntity(
+      success:
+          (json["Status"] ?? "error").toString().toLowerCase() == "success",
+      message: json["Report"] ?? "",
+      data: data,
+      statusCode: json["status_code"],
+      error: json["error"],
+    );
+  }
 }

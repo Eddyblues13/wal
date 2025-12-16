@@ -1,94 +1,23 @@
-import 'package:flutter/cupertino.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:wal/pages/home/home_page.dart';
-
-
-import '../../../common/values/colors.dart';
-
+import 'package:flutter/material.dart';
+import 'package:wal/pages/discover/discover.dart';
+import 'package:wal/pages/earn/earn.dart';
+import 'package:wal/pages/home/dialog/settings_page.dart';
+import 'package:wal/pages/home/home.dart';
+import 'package:wal/pages/swap/swap.dart';
+import 'package:wal/pages/trending/trending.dart';
 
 Widget buildPage(int index) {
+  switch (index) {
+    case 0:
+      return const Home();
+    case 1:
+      return const SwapPage();
+    case 2:
+      return const StakePage();
+    case 3:
+      return const SettingsPage();
 
-
-var bottomTabs = [
-  BottomNavigationBarItem(
-    label: "home",
-    icon: SizedBox(
-      width: 15.w,
-      height: 15.h,
-      child: Image.asset("assets/icons/home.png"),
-    ),
-    activeIcon: SizedBox(
-      width: 15.w,
-      height: 15.h,
-      child: Image.asset(
-        "assets/icons/home.png",
-        color: AppColors.primaryElement,
-      ),
-    ),
-  ),
-  BottomNavigationBarItem(
-    label: "search",
-    icon: SizedBox(
-      width: 15.w,
-      height: 15.h,
-      child: Image.asset("assets/icons/search2.png"),
-    ),
-    activeIcon: SizedBox(
-      width: 15.w,
-      height: 15.h,
-      child: Image.asset(
-        "assets/icons/search2.png",
-        color: AppColors.primaryElement,
-      ),
-    ),
-  ),
-  BottomNavigationBarItem(
-    label: "course",
-    icon: SizedBox(
-      width: 15.w,
-      height: 15.h,
-      child: Image.asset("assets/icons/play-circle1.png"),
-    ),
-    activeIcon: SizedBox(
-      width: 15.w,
-      height: 15.h,
-      child: Image.asset(
-        "assets/icons/play-circle1.png",
-        color: AppColors.primaryElement,
-      ),
-    ),
-  ),
-  BottomNavigationBarItem(
-    label: "chat",
-    icon: SizedBox(
-      width: 15.w,
-      height: 15.h,
-      child: Image.asset("assets/icons/message-circle.png"),
-    ),
-    activeIcon: SizedBox(
-      width: 15.w,
-      height: 15.h,
-      child: Image.asset(
-        "assets/icons/message-circle.png",
-        color: AppColors.primaryElement,
-      ),
-    ),
-  ),
-  BottomNavigationBarItem(
-    label: "profile",
-    icon: SizedBox(
-      width: 15.w,
-      height: 15.h,
-      child: Image.asset("assets/icons/person2.png"),
-    ),
-    activeIcon: SizedBox(
-      width: 15.w,
-      height: 15.h,
-      child: Image.asset(
-        "assets/icons/person2.png",
-        color: AppColors.primaryElement,
-      ),
-    ),
-  ),
-];
+    default:
+      return const Home();
+  }
+}

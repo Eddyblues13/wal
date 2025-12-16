@@ -1,4 +1,3 @@
-// sign_up_event.dart
 abstract class SignUpEvent {
   const SignUpEvent();
 }
@@ -26,4 +25,14 @@ class FirstNameEvent extends SignUpEvent {
 class LastNameEvent extends SignUpEvent {
   final String lastName;
   const LastNameEvent(this.lastName);
+}
+
+class LoadingEvent extends SignUpEvent {
+  final bool isLoading;
+  const LoadingEvent(this.isLoading);
+}
+
+class ErrorEvent extends SignUpEvent {
+  final String error;
+  const ErrorEvent(this.error);
 }

@@ -1,4 +1,13 @@
-class AppState{
+class AppState {
+  const AppState({this.index = 0, this.isLoading = false});
+
   final int index;
-  const AppState({this.index=0});
+  final bool isLoading;
+
+  AppState copyWith({int? index, bool? isLoading}) {
+    return AppState(
+      index: index ?? this.index,
+      isLoading: isLoading ?? this.isLoading,
+    );
+  }
 }

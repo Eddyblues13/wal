@@ -1,4 +1,4 @@
-// http_util.dart
+import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
@@ -14,10 +14,10 @@ class HttpUtil {
   HttpUtil._internal() {
     BaseOptions options = BaseOptions(
       baseUrl: AppConstants.SERVER_API_URL,
-      connectTimeout: const Duration(seconds: 10), // Increased timeout
-      receiveTimeout: const Duration(seconds: 10), // Increased timeout
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
       headers: {},
-      contentType: "application/json; charset=utf-8", // Fixed content type
+      contentType: "application/x-www-form-urlencoded", // CHANGED from JSON
       responseType: ResponseType.json,
     );
     dio = Dio(options);
@@ -36,6 +36,7 @@ class HttpUtil {
         onRequest: (options, handler) {
           print('REQUEST[${options.method}] => PATH: ${options.path}');
           print('REQUEST DATA: ${options.data}');
+          print('CONTENT TYPE: ${options.contentType}');
           return handler.next(options);
         },
         onResponse: (response, handler) {
@@ -65,17 +66,42 @@ class HttpUtil {
       requestOptions.headers!.addAll(authorization);
     }
 
+    // Convert JSON data to form data if needed
+    dynamic requestData = mydata;
+    if (mydata is Map<String, dynamic>) {
+      requestData = FormData.fromMap(mydata); // CONVERT TO FORM DATA
+    }
+
     try {
       var response = await dio.post(
         path,
-        data: mydata, // Send data in body
+        data: requestData, // Use converted form data
         queryParameters: queryParameters,
         options: requestOptions,
       );
+
+      // Handle string JSON responses
+      if (response.data is String) {
+        try {
+          return jsonDecode(response.data as String);
+        } catch (e) {
+          print('⚠️ Response is string but not JSON: ${response.data}');
+          return response.data;
+        }
+      }
+
       return response.data;
     } on DioException catch (e) {
       // Handle specific error cases
       if (e.response != null) {
+        // Also handle string responses in errors
+        if (e.response!.data is String) {
+          try {
+            return jsonDecode(e.response!.data as String);
+          } catch (parseError) {
+            return e.response!.data;
+          }
+        }
         return e.response!.data;
       } else {
         rethrow;
@@ -83,6 +109,7 @@ class HttpUtil {
     }
   }
 
+  // Keep getAuthorizationHeader() and get() method the same...
   Map<String, dynamic>? getAuthorizationHeader() {
     var headers = <String, dynamic>{};
     var accessToken = Global.storageService.getUserToken();
@@ -92,7 +119,6 @@ class HttpUtil {
     return headers;
   }
 
-  // lib/common/utils/http_util.dart
   Future<dynamic> get(
     String path, {
     Map<String, dynamic>? queryParameters,
@@ -112,9 +138,28 @@ class HttpUtil {
         queryParameters: queryParameters,
         options: requestOptions,
       );
+
+      // Handle string JSON responses for GET requests too
+      if (response.data is String) {
+        try {
+          return jsonDecode(response.data as String);
+        } catch (e) {
+          print('⚠️ GET Response is string but not JSON: ${response.data}');
+          return response.data;
+        }
+      }
+
       return response.data;
     } on DioException catch (e) {
       if (e.response != null) {
+        // Handle string responses in errors for GET
+        if (e.response!.data is String) {
+          try {
+            return jsonDecode(e.response!.data as String);
+          } catch (parseError) {
+            return e.response!.data;
+          }
+        }
         return e.response!.data;
       } else {
         rethrow;

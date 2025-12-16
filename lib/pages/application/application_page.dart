@@ -16,54 +16,88 @@ class ApplicationPage extends StatefulWidget {
 
 class _ApplicationPageState extends State<ApplicationPage> {
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return BlocBuilder<AppBlocs, AppState>(
       builder: (context, state) {
         return Container(
-          color: Colors.white,
+          color: AppColors.background,
           child: SafeArea(
             child: Scaffold(
+              backgroundColor: AppColors.background,
               body: buildPage(state.index),
               bottomNavigationBar: Container(
                 width: 375.w,
-                height: 58.h,
+                height: 80.h,
                 decoration: BoxDecoration(
-                  color: AppColors.primaryElement,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(20.h),
-                    topRight: Radius.circular(20.h),
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.grey.withOpacity(0.1),
-                      spreadRadius: 1,
-                      blurRadius: 1,
+                  color: AppColors.card,
+                  border: Border(
+                    top: BorderSide(
+                      color: AppColors.muted.withOpacity(0.3),
+                      width: 1,
                     ),
-                  ],
+                  ),
                 ),
-                child: BottomNavigationBar(
-                  currentIndex: state.index,
-                  onTap: (value) {
-                    context.read<AppBlocs>().add(TriggerAppEvent(value));
-                  },
-                  elevation: 0,
-                  type: BottomNavigationBarType.fixed,
-                  showSelectedLabels: false,
-                  showUnselectedLabels: false,
-                  selectedItemColor: AppColors.primaryElement,
-                  unselectedItemColor: AppColors.primaryFourthElementText,
-                  items: bottomTabs,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildNavItem(Icons.home_filled, 'Home', 0, state.index),
+                    _buildNavItem(Icons.swap_horiz, 'Swap', 1, state.index),
+                    _buildNavItem(Icons.auto_graph, 'Stake', 2, state.index),
+                    _buildNavItem(Icons.settings, 'Settings', 3, state.index),
+                  ],
                 ),
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildNavItem(
+    IconData icon,
+    String label,
+    int index,
+    int currentIndex,
+  ) {
+    final isSelected = currentIndex == index;
+    return GestureDetector(
+      onTap: () {
+        context.read<AppBlocs>().add(TriggerAppEvent(index));
+      },
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 12.w),
+        decoration: isSelected
+            ? BoxDecoration(
+                color: AppColors.primaryColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12.r),
+              )
+            : null,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              color: isSelected
+                  ? AppColors.primaryColor
+                  : AppColors.secondaryText,
+              size: 24.sp,
+            ),
+            SizedBox(height: 4.h),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected
+                    ? AppColors.primaryColor
+                    : AppColors.secondaryText,
+                fontSize: 10.sp,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -1,7 +1,11 @@
+// sign_in.dart - UPDATED (only the changed parts)
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lottie/lottie.dart';
+import 'package:url_launcher/url_launcher.dart'; // ADD THIS IMPORT
+import 'package:wal/common/routes/names.dart';
+import 'package:wal/common/values/colors.dart';
 import 'package:wal/pages/sign_in/bloc/sign_in_bloc.dart';
 import 'package:wal/pages/sign_in/bloc/sign_in_event.dart';
 import 'package:wal/pages/sign_in/bloc/sign_in_state.dart';
@@ -15,74 +19,109 @@ class SignIn extends StatefulWidget {
 }
 
 class _SignInState extends State<SignIn> {
+  final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _obscurePassword = true;
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<SignInBloc, SignInState>(
       builder: (context, state) {
         return Container(
-          color: Colors.white,
+          color: AppColors.background,
           child: SafeArea(
             child: Scaffold(
-              backgroundColor: Colors.white,
-              appBar: buildAppBar(),
+              backgroundColor: AppColors.background,
               body: state.isLoading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppColors.primaryColor,
+                        ),
+                      ),
+                    )
                   : SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // 🔹 Lottie Animation (Login theme)
+                          // App Bar
+                          _buildAppBar(),
+
+                          // Lottie Animation
                           Center(
                             child: Lottie.network(
                               "https://assets10.lottiefiles.com/packages/lf20_jcikwtux.json",
-                              height: 150.h,
+                              height: 200.h,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Icon(
+                                  Icons.account_circle,
+                                  size: 120.w,
+                                  color: AppColors.primaryColor,
+                                );
+                              },
                             ),
                           ),
-                          buildThirdPartyLogin(context),
-                          Center(
-                            child: reusableText(
-                              "Or use your email account to login",
-                            ),
+
+                          SizedBox(height: 20.h),
+
+                          // Username Field
+                          _buildTextFieldSection(
+                            "Username",
+                            Icons.person_outline,
+                            _usernameController,
+                            false,
+                            (value) {
+                              context.read<SignInBloc>().add(
+                                UsernameEvent(value),
+                              );
+                            },
                           ),
-                          Container(
-                            margin: EdgeInsets.only(top: 20.h),
-                            padding: EdgeInsets.symmetric(horizontal: 25.w),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                reusableText("Email"),
-                                buildTextField(
-                                  "Enter your email address",
-                                  "email",
-                                  "user",
-                                  (value) {
-                                    context
-                                        .read<SignInBloc>()
-                                        .add(EmailEvent(value));
-                                  },
-                                ),
-                                reusableText("Password"),
-                                buildTextField(
-                                  "Enter your password",
-                                  "password",
-                                  "lock",
-                                  (value) {
-                                    context
-                                        .read<SignInBloc>()
-                                        .add(PasswordEvent(value));
-                                  },
-                                ),
-                              ],
-                            ),
+
+                          // Password Field
+                          _buildTextFieldSection(
+                            "Password",
+                            Icons.lock_outline,
+                            _passwordController,
+                            true,
+                            (value) {
+                              context.read<SignInBloc>().add(
+                                PasswordEvent(value),
+                              );
+                            },
                           ),
-                          forgotPassword(),
-                          buildLogInAndRegButton("Log In", "login", () {
-                            SignInController(context: context)
-                                .handleSignIn("email");
-                          }),
-                          buildLogInAndRegButton("Register", "register", () {
-                            Navigator.of(context).pushNamed("/register");
-                          }),
+
+                          // Forgot Password
+                          _buildForgotPassword(),
+
+                          // Sign In Button
+                          _buildActionButton(
+                            "Sign In",
+                            AppColors.primaryColor,
+                            () {
+                              SignInController(
+                                context: context,
+                              ).handleSignIn("email");
+                            },
+                          ),
+
+                          // Divider
+                          _buildDivider(),
+
+                          // Sign Up Button - UPDATED
+                          _buildActionButton(
+                            "Create New Account",
+                            AppColors.purpleBadge,
+                            _navigateToSignUp, // CHANGED: Use the new method
+                          ),
+
+                          SizedBox(height: 30.h),
                         ],
                       ),
                     ),
@@ -93,108 +132,179 @@ class _SignInState extends State<SignIn> {
     );
   }
 
-  AppBar buildAppBar() {
-    return AppBar(
-      backgroundColor: Colors.white,
-      elevation: 0,
-      centerTitle: true,
-      title: const Text(
-        "Sign In",
-        style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-      ),
-    );
+  // Add the _navigateToSignUp method
+  void _navigateToSignUp() {
+    final url = "https://starmallinternational.com/shop/app/register.php";
+    _launchURL(url);
   }
 
-  Widget reusableText(String text) {
+  // Add the _launchURL method (same as in welcome.dart)
+  void _launchURL(String url) async {
+    try {
+      if (await canLaunchUrl(Uri.parse(url))) {
+        await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not launch $url'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  // Keep all other UI methods the same (_buildAppBar, _buildTextFieldSection, etc.)
+  Widget _buildAppBar() {
     return Padding(
-      padding: EdgeInsets.only(top: 15.h, bottom: 5.h),
-      child: Text(
-        text,
-        style: TextStyle(fontSize: 14.sp, color: Colors.grey[800]),
+      padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 20.h),
+      child: Row(
+        children: [
+          Text(
+            "Sign In",
+            style: TextStyle(
+              color: AppColors.primaryText,
+              fontSize: 24.sp,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget buildTextField(
-    String hintText,
-    String type,
-    String iconName,
-    Function(String)? onChanged,
+  Widget _buildTextFieldSection(
+    String label,
+    IconData icon,
+    TextEditingController controller,
+    bool isPassword,
+    Function(String) onChanged,
   ) {
-    return Container(
-      margin: EdgeInsets.only(top: 10.h, bottom: 20.h),
-      child: TextField(
-        obscureText: type == "password",
-        onChanged: onChanged,
-        decoration: InputDecoration(
-          prefixIcon: Icon(
-            type == "email" ? Icons.email : Icons.lock,
-            color: Colors.grey,
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 10.h),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              color: AppColors.secondaryText,
+              fontSize: 14.sp,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-          hintText: hintText,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12.r),
+          SizedBox(height: 8.h),
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              borderRadius: BorderRadius.circular(12.r),
+              border: Border.all(color: AppColors.muted.withOpacity(0.3)),
+            ),
+            child: TextField(
+              controller: controller,
+              style: TextStyle(color: AppColors.primaryText, fontSize: 16.sp),
+              obscureText: isPassword && _obscurePassword,
+              onChanged: onChanged,
+              decoration: InputDecoration(
+                prefixIcon: Icon(icon, color: AppColors.secondaryText),
+                suffixIcon: isPassword
+                    ? IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: AppColors.secondaryText,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      )
+                    : null,
+                hintText: "Enter your $label",
+                hintStyle: TextStyle(color: AppColors.muted),
+                border: InputBorder.none,
+                contentPadding: EdgeInsets.symmetric(
+                  horizontal: 16.w,
+                  vertical: 14.h,
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
 
-  Widget forgotPassword() {
+  Widget _buildForgotPassword() {
     return Container(
       alignment: Alignment.centerRight,
-      margin: EdgeInsets.only(right: 25.w, bottom: 20.h),
+      margin: EdgeInsets.only(right: 25.w, top: 10.h, bottom: 20.h),
       child: TextButton(
         onPressed: () {
-          Navigator.of(context).pushNamed("/forgot_password");
+          Navigator.of(context).pushNamed(AppRoutes.FORGOT_PASSWORD);
         },
-        child: const Text(
-          "Forgot Password?",
-          style: TextStyle(color: Colors.blue),
-        ),
-      ),
-    );
-  }
-
-  Widget buildLogInAndRegButton(
-    String buttonText,
-    String type,
-    VoidCallback onTap,
-  ) {
-    return Container(
-      margin: EdgeInsets.symmetric(horizontal: 25.w, vertical: 10.h),
-      width: double.infinity,
-      height: 50.h,
-      child: ElevatedButton(
-        onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: type == "login" ? Colors.blue : Colors.green,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-        ),
         child: Text(
-          buttonText,
-          style: TextStyle(fontSize: 16.sp, color: Colors.white),
+          "Forgot Password?",
+          style: TextStyle(
+            color: AppColors.primaryColor,
+            fontSize: 14.sp,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ),
     );
   }
 
-  Widget buildThirdPartyLogin(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(top: 20.h, bottom: 20.h),
-      alignment: Alignment.center,
-      child: ElevatedButton.icon(
-        onPressed: () {
-          // Add Google login logic
-        },
-        icon: const Icon(Icons.g_mobiledata, color: Colors.white),
-        label: const Text("Sign in with Google"),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+  Widget _buildActionButton(String text, Color color, VoidCallback onPressed) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 10.h),
+      child: SizedBox(
+        width: double.infinity,
+        height: 50.h,
+        child: ElevatedButton(
+          onPressed: onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: color,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.r),
+            ),
+            elevation: 2,
+            shadowColor: color.withOpacity(0.3),
+          ),
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 16.sp,
+              fontWeight: FontWeight.w600,
+              color: Colors.black,
+            ),
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildDivider() {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: 25.w, vertical: 10.h),
+      child: Row(
+        children: [
+          Expanded(child: Divider(color: AppColors.muted, thickness: 1)),
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 15.w),
+            child: Text(
+              "OR",
+              style: TextStyle(color: AppColors.secondaryText, fontSize: 14.sp),
+            ),
+          ),
+          Expanded(child: Divider(color: AppColors.muted, thickness: 1)),
+        ],
       ),
     );
   }

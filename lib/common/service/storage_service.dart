@@ -46,4 +46,36 @@ class StorageService {
     }
     return UserItem();
   }
+
+  String getUserMnemonic() {
+    return _prefs.getString('user_mnemonic') ?? "";
+  }
+
+  String getUserWallet() {
+    final wallet = _prefs.getString('user_wallet') ?? "";
+    print('🔍 STORAGE - Retrieved wallet: "$wallet"');
+    print('🔍 STORAGE - Wallet is empty: ${wallet.isEmpty}');
+    return wallet;
+  }
+
+  Future<bool> setUserWallet(String wallet, String mnemonic) async {
+    print('💾 STORAGE - Saving wallet: $wallet');
+    await _prefs.setString('user_wallet', wallet);
+    final result = await _prefs.setString('user_mnemonic', mnemonic);
+    print('✅ STORAGE - Wallet saved successfully');
+    return result;
+  }
+
+  // Add this method to debug all storage contents
+  void debugStorage() {
+    print('=== STORAGE DEBUG ===');
+    print(
+      'User Token: ${_prefs.getString(AppConstants.STORAGE_USER_TOKEN_KEY) ?? "NOT SET"}',
+    );
+    print('User Wallet: ${_prefs.getString('user_wallet') ?? "NOT SET"}');
+    print(
+      'User Profile: ${_prefs.getString(AppConstants.STORAGE_USER_PROFILE_KEY) ?? "NOT SET"}',
+    );
+    print('=====================');
+  }
 }

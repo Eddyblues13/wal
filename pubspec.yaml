@@ -36,6 +36,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_screenutil:
   flutter_bloc:
+  formz: 
   equatable:
   smooth_page_indicator:
   dots_indicator:
@@ -45,6 +46,8 @@ dependencies:
   dio:
   fluttertoast: ^8.2.14
   lottie: ^3.3.2
+  rename_app: ^1.6.5
+  url_launcher: ^6.3.2
 
 
 dev_dependencies:
@@ -57,6 +60,15 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
+  
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/icons/app_icon.jpg"
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/icons/app_icon.jpg"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

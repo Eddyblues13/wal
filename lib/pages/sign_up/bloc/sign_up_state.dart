@@ -1,4 +1,3 @@
-// sign_up_state.dart
 class SignUpState {
   const SignUpState({
     this.email = "",
@@ -6,6 +5,8 @@ class SignUpState {
     this.confirmPassword = "",
     this.firstName = "",
     this.lastName = "",
+    this.isLoading = false,
+    this.error = "",
   });
 
   final String email;
@@ -13,6 +14,8 @@ class SignUpState {
   final String confirmPassword;
   final String firstName;
   final String lastName;
+  final bool isLoading;
+  final String error;
 
   SignUpState copyWith({
     String? email,
@@ -20,6 +23,8 @@ class SignUpState {
     String? confirmPassword,
     String? firstName,
     String? lastName,
+    bool? isLoading,
+    String? error,
   }) {
     return SignUpState(
       email: email ?? this.email,
@@ -27,6 +32,8 @@ class SignUpState {
       confirmPassword: confirmPassword ?? this.confirmPassword,
       firstName: firstName ?? this.firstName,
       lastName: lastName ?? this.lastName,
+      isLoading: isLoading ?? this.isLoading,
+      error: error ?? this.error,
     );
   }
 }

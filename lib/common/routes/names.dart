@@ -1,10 +1,14 @@
 class AppRoutes {
-  //welcome page or on boarding
-  static const INITIAL = "/";
-  //sign in page
-  static const SING_IN = "/sign_in";
-  //register page
-  static const SING_UP = "/sign_up";
-  //application page
-  static const DASHBOARD = "/dashboard";
+  static const INITIAL = '/';
+  static const SIGN_IN = '/signIn';
+  static const SIGN_UP = '/signUp';
+  static const SEED_PHRASE = '/seed_phrase';
+  static const FORGOT_PASSWORD = '/forgot_password';
+  static const APPLICATION = '/application';
+  static const HOME = '/home';
+  static const TRENDING = '/trending';
+  static const SWAP = '/swap';
+  static const EARN = '/earn';
+  static const DISCOVER = '/discover';
+  static const WALLET = '/wallet';
 }
