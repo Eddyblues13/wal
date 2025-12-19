@@ -7,7 +7,7 @@ import 'package:wal/pages/application/bloc/app_blocs.dart';
 import 'package:wal/pages/application/application_page.dart';
 import 'package:wal/pages/discover/bloc/discover_bloc.dart';
 import 'package:wal/pages/discover/discover.dart';
-import 'package:wal/pages/earn/bloc/earn_bloc.dart';
+import 'package:wal/pages/earn/bloc/stake_bloc.dart';
 import 'package:wal/pages/earn/earn.dart';
 import 'package:wal/pages/forgot_password/bloc/forgot_password_bloc.dart';
 import 'package:wal/pages/forgot_password/forgot_password.dart';

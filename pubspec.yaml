@@ -43,11 +43,13 @@ dependencies:
   flutter_easyloading:
   shared_preferences:
   flutter_secure_storage:
+  provider: ^6.1.1
   dio:
   fluttertoast: ^8.2.14
   lottie: ^3.3.2
   rename_app: ^1.6.5
   url_launcher: ^6.3.2
+  share_plus: ^7.2.1
 
 
 dev_dependencies:

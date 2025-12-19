@@ -1,41 +1,74 @@
+// lib/pages/swap/swap.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:wal/common/values/colors.dart';
-import 'bloc/swap_bloc.dart';
+import 'package:wal/pages/swap/bloc/swap_bloc.dart';
+import 'package:wal/pages/swap/bloc/swap_event.dart';
+import 'package:wal/pages/swap/bloc/swap_state.dart';
+import 'package:wal/pages/swap/swap_controller.dart';
 
-class SwapPage extends StatelessWidget {
+class SwapPage extends StatefulWidget {
   const SwapPage({super.key});
+
+  @override
+  State<SwapPage> createState() => _SwapPageState();
+}
+
+class _SwapPageState extends State<SwapPage> {
+  bool _hasInitialized = false;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => SwapBloc(),
-      child: BlocBuilder<SwapBloc, int>(
-        builder: (context, state) {
-          return Scaffold(
-            backgroundColor: AppColors.background,
-            appBar: AppBar(
-              backgroundColor: AppColors.background,
-              elevation: 0,
-              centerTitle: true,
-              title: Text(
-                'Swap',
-                style: TextStyle(
-                  color: AppColors.primaryText,
-                  fontSize: 18.sp,
-                  fontWeight: FontWeight.w600,
+      create: (context) => SwapBloc(),
+      child: Builder(
+        builder: (blocContext) {
+          // Load swap data once when bloc is available
+          if (!_hasInitialized) {
+            _hasInitialized = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && blocContext.mounted) {
+                SwapController(context: blocContext).loadSwapData();
+              }
+            });
+          }
+          
+          return BlocBuilder<SwapBloc, SwapState>(
+            builder: (context, state) {
+              return Scaffold(
+                backgroundColor: AppColors.background,
+                appBar: AppBar(
+                  backgroundColor: AppColors.background,
+                  elevation: 0,
+                  centerTitle: true,
+                  title: Text(
+                    'Swap',
+                    style: TextStyle(
+                      color: AppColors.primaryText,
+                      fontSize: 18.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
-              ),
-            ),
-            body: _buildSwapBody(context, state),
+                body: state.isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            AppColors.primaryColor,
+                          ),
+                        ),
+                      )
+                    : _buildSwapBody(context, state),
+              );
+            },
           );
         },
       ),
     );
   }
 
-  Widget _buildSwapBody(BuildContext context, int state) {
+  Widget _buildSwapBody(BuildContext context, SwapState state) {
     return SafeArea(
       child: Column(
         children: [
@@ -60,36 +93,45 @@ class SwapPage extends StatelessWidget {
                       children: [
                         _buildSwapInput(
                           context,
+                          state,
                           'From',
-                          'STAR',
-                          'STAR',
-                          '0.00',
+                          state.fromAsset?['symbol'] ?? 'STAR',
+                          state.fromAsset?['name'] ?? 'STAR',
+                          state.fromAmount,
                           Icons.account_balance_wallet_outlined,
+                          true,
                         ),
 
                         // Swap arrow button
-                        Container(
-                          margin: EdgeInsets.symmetric(vertical: 8.h),
-                          child: Icon(
-                            Icons.swap_vert,
-                            color: AppColors.primaryColor,
-                            size: 24.sp,
+                        GestureDetector(
+                          onTap: () {
+                            context.read<SwapBloc>().add(const SwapTokensEvent());
+                          },
+                          child: Container(
+                            margin: EdgeInsets.symmetric(vertical: 8.h),
+                            child: Icon(
+                              Icons.swap_vert,
+                              color: AppColors.primaryColor,
+                              size: 24.sp,
+                            ),
                           ),
                         ),
 
                         _buildSwapInput(
                           context,
+                          state,
                           'To',
-                          'USDT',
-                          'Tether USD',
-                          '0.00',
+                          state.toAsset?['symbol'] ?? 'USDT',
+                          state.toAsset?['name'] ?? 'Tether USD',
+                          state.toAmount,
                           Icons.currency_exchange_outlined,
+                          false,
                         ),
 
                         SizedBox(height: 16.h),
 
                         // Price info
-                        _buildPriceInfo(),
+                        _buildPriceInfo(state),
                       ],
                     ),
                   ),
@@ -97,7 +139,7 @@ class SwapPage extends StatelessWidget {
                   SizedBox(height: 20.h),
 
                   // Swap details
-                  _buildSwapDetails(),
+                  _buildSwapDetails(state),
 
                   SizedBox(height: 20.h),
 
@@ -126,7 +168,7 @@ class SwapPage extends StatelessWidget {
                   SizedBox(height: 12.h),
 
                   // Recent Swaps List
-                  _buildRecentSwapsList(),
+                  _buildRecentSwapsList(state),
 
                   SizedBox(height: 20.h), // Extra bottom padding
                 ],
@@ -152,18 +194,19 @@ class SwapPage extends StatelessWidget {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primaryColor,
-                  foregroundColor: AppColors.background,
+                  foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.r),
                   ),
                   elevation: 0,
                 ),
                 onPressed: () {
-                  _showSwapConfirmation(context);
+                  _showComingSoonDialog(context);
                 },
                 child: Text(
                   'Swap Now',
                   style: TextStyle(
+                    color: Colors.white,
                     fontSize: 16.sp,
                     fontWeight: FontWeight.w600,
                   ),
@@ -178,11 +221,13 @@ class SwapPage extends StatelessWidget {
 
   Widget _buildSwapInput(
     BuildContext context,
+    SwapState state,
     String label,
     String symbol,
     String name,
     String amount,
     IconData icon,
+    bool isFrom,
   ) {
     return Container(
       padding: EdgeInsets.all(16.w),
@@ -201,50 +246,57 @@ class SwapPage extends StatelessWidget {
           Row(
             children: [
               // Token selector
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
-                decoration: BoxDecoration(
-                  color: AppColors.arrowBox,
-                  borderRadius: BorderRadius.circular(8.r),
-                ),
-                child: Row(
-                  children: [
-                    Icon(icon, color: AppColors.primaryColor, size: 18.sp),
-                    SizedBox(width: 8.w),
-                    Text(
-                      symbol,
-                      style: TextStyle(
-                        color: AppColors.primaryText,
-                        fontSize: 14.sp,
-                        fontWeight: FontWeight.w600,
+              GestureDetector(
+                onTap: () {
+                  _showAssetSelector(context, state, isFrom);
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+                  decoration: BoxDecoration(
+                    color: AppColors.arrowBox,
+                    borderRadius: BorderRadius.circular(8.r),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(icon, color: AppColors.primaryColor, size: 18.sp),
+                      SizedBox(width: 8.w),
+                      Text(
+                        symbol,
+                        style: TextStyle(
+                          color: AppColors.primaryText,
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                    SizedBox(width: 4.w),
-                    Icon(
-                      Icons.keyboard_arrow_down,
-                      color: AppColors.secondaryText,
-                      size: 16.sp,
-                    ),
-                  ],
+                      SizedBox(width: 4.w),
+                      Icon(
+                        Icons.keyboard_arrow_down,
+                        color: AppColors.secondaryText,
+                        size: 16.sp,
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const Spacer(),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    amount,
-                    style: TextStyle(
-                      color: AppColors.primaryText,
-                      fontSize: 18.sp,
-                      fontWeight: FontWeight.w600,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '0.00',
+                      style: TextStyle(
+                        color: AppColors.primaryText,
+                        fontSize: 18.sp,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                  Text(
-                    name,
-                    style: TextStyle(color: AppColors.muted, fontSize: 12.sp),
-                  ),
-                ],
+                    Text(
+                      name,
+                      style: TextStyle(color: AppColors.muted, fontSize: 12.sp),
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -253,7 +305,10 @@ class SwapPage extends StatelessWidget {
     );
   }
 
-  Widget _buildPriceInfo() {
+  Widget _buildPriceInfo(SwapState state) {
+    final fromSymbol = state.fromAsset?['symbol'] ?? 'STAR';
+    final toSymbol = state.toAsset?['symbol'] ?? 'USDT';
+    
     return Container(
       padding: EdgeInsets.all(12.w),
       decoration: BoxDecoration(
@@ -268,7 +323,7 @@ class SwapPage extends StatelessWidget {
             style: TextStyle(color: AppColors.secondaryText, fontSize: 12.sp),
           ),
           Text(
-            '1 TAP = 0.17 USDT',
+            '1 $fromSymbol = 0.00 $toSymbol',
             style: TextStyle(
               color: AppColors.primaryText,
               fontSize: 12.sp,
@@ -280,7 +335,9 @@ class SwapPage extends StatelessWidget {
     );
   }
 
-  Widget _buildSwapDetails() {
+  Widget _buildSwapDetails(SwapState state) {
+    final toSymbol = state.toAsset?['symbol'] ?? 'USDT';
+    
     return Container(
       padding: EdgeInsets.all(16.w),
       decoration: BoxDecoration(
@@ -289,13 +346,13 @@ class SwapPage extends StatelessWidget {
       ),
       child: Column(
         children: [
-          _buildDetailRow('Network Fee', '\$1.20'),
+          _buildDetailRow('Network Fee', state.networkFee),
           SizedBox(height: 8.h),
-          _buildDetailRow('Price Impact', '0.3%', isPositive: true),
+          _buildDetailRow('Price Impact', state.priceImpact, isPositive: true),
           SizedBox(height: 8.h),
-          _buildDetailRow('Minimum Received', '99.4 USDT'),
+          _buildDetailRow('Minimum Received', '${state.minimumReceived} $toSymbol'),
           SizedBox(height: 8.h),
-          _buildDetailRow('Route', 'TAP → USDT', showInfo: true),
+          _buildDetailRow('Route', state.route, showInfo: true),
         ],
       ),
     );
@@ -330,12 +387,12 @@ class SwapPage extends StatelessWidget {
     );
   }
 
-  Widget _buildRecentSwapsList() {
-    final recentSwaps = [
-      {'from': 'STAR', 'to': 'USDT', 'amount': '100', 'value': '\$17.00'},
-      {'from': 'TON', 'to': 'USDT', 'amount': '5', 'value': '\$25.00'},
-      {'from': 'USDT', 'to': 'STAR', 'amount': '50', 'value': '\$8.50'},
-    ];
+  Widget _buildRecentSwapsList(SwapState state) {
+    final recentSwaps = state.recentSwaps;
+
+    if (recentSwaps.isEmpty) {
+      return const SizedBox.shrink();
+    }
 
     return ListView.separated(
       physics: const NeverScrollableScrollPhysics(),
@@ -361,7 +418,7 @@ class SwapPage extends StatelessWidget {
                     ),
                     child: Center(
                       child: Text(
-                        swap['from']!.substring(0, 1),
+                        (swap['from'] ?? '').toString().substring(0, 1),
                         style: TextStyle(
                           color: AppColors.purpleBadge,
                           fontSize: 12.sp,
@@ -381,7 +438,7 @@ class SwapPage extends StatelessWidget {
                       ),
                       child: Center(
                         child: Text(
-                          swap['to']!.substring(0, 1),
+                          (swap['to'] ?? '').toString().substring(0, 1),
                           style: TextStyle(
                             color: AppColors.primaryColor,
                             fontSize: 12.sp,
@@ -408,7 +465,7 @@ class SwapPage extends StatelessWidget {
                     ),
                     SizedBox(height: 2.h),
                     Text(
-                      '${(index + 1) * 10} mins ago',
+                      swap['time'] ?? '${(index + 1) * 10} mins ago',
                       style: TextStyle(color: AppColors.muted, fontSize: 12.sp),
                     ),
                   ],
@@ -426,7 +483,7 @@ class SwapPage extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    swap['value']!,
+                    swap['value'] ?? '',
                     style: TextStyle(
                       color: AppColors.primaryColor,
                       fontSize: 12.sp,
@@ -441,7 +498,67 @@ class SwapPage extends StatelessWidget {
     );
   }
 
-  void _showSwapConfirmation(BuildContext context) {
+  void _showAssetSelector(BuildContext context, SwapState state, bool isFrom) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppColors.card,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20.r)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.all(16.w),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Select ${isFrom ? 'From' : 'To'} Asset',
+                style: TextStyle(
+                  color: AppColors.primaryText,
+                  fontSize: 18.sp,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              SizedBox(height: 16.h),
+              ...state.availableAssets.map((asset) {
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: AppColors.primaryColor.withOpacity(0.1),
+                    child: Text(
+                      asset['symbol'] ?? '',
+                      style: TextStyle(
+                        color: AppColors.primaryColor,
+                        fontSize: 12.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  title: Text(
+                    asset['symbol'] ?? '',
+                    style: TextStyle(color: AppColors.primaryText),
+                  ),
+                  subtitle: Text(
+                    asset['name'] ?? '',
+                    style: TextStyle(color: AppColors.secondaryText),
+                  ),
+                  onTap: () {
+                    if (isFrom) {
+                      context.read<SwapBloc>().add(SelectFromAssetEvent(asset));
+                    } else {
+                      context.read<SwapBloc>().add(SelectToAssetEvent(asset));
+                    }
+                    Navigator.pop(context);
+                  },
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showComingSoonDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -449,88 +566,46 @@ class SwapPage extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16.r),
         ),
-        title: Text(
-          'Confirm Swap',
-          style: TextStyle(
-            color: AppColors.primaryText,
-            fontSize: 18.sp,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
+        title: Row(
           children: [
-            _buildConfirmationRow('From', '100 STAR', '\$17.00'),
-            SizedBox(height: 8.h),
-            _buildConfirmationRow('To', '17 USDT', '\$17.00'),
-            SizedBox(height: 12.h),
-            _buildConfirmationRow('Network Fee', '\$1.20', '', isFee: true),
+            Icon(
+              Icons.info_outline,
+              color: AppColors.primaryColor,
+              size: 24.sp,
+            ),
+            SizedBox(width: 12.w),
+            Text(
+              'Coming Soon',
+              style: TextStyle(
+                color: AppColors.primaryText,
+                fontSize: 20.sp,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: AppColors.secondaryText),
-            ),
+        content: Text(
+          'The swap feature is coming soon. Stay tuned for updates!',
+          style: TextStyle(
+            color: AppColors.secondaryText,
+            fontSize: 16.sp,
           ),
+        ),
+        actions: [
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryColor,
-              foregroundColor: AppColors.background,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.r),
+              ),
             ),
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  backgroundColor: AppColors.primaryColor,
-                  content: Text(
-                    'Swap executed successfully!',
-                    style: TextStyle(color: AppColors.background),
-                  ),
-                ),
-              );
-            },
-            child: Text('Confirm Swap'),
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildConfirmationRow(
-    String label,
-    String value,
-    String amount, {
-    bool isFee = false,
-  }) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          label,
-          style: TextStyle(color: AppColors.secondaryText, fontSize: 14.sp),
-        ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              value,
-              style: TextStyle(
-                color: isFee ? AppColors.muted : AppColors.primaryText,
-                fontSize: 14.sp,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            if (amount.isNotEmpty)
-              Text(
-                amount,
-                style: TextStyle(color: AppColors.muted, fontSize: 12.sp),
-              ),
-          ],
-        ),
-      ],
-    );
-  }
 }

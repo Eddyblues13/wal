@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:wal/pages/discover/discover.dart';
 import 'package:wal/pages/earn/earn.dart';
-import 'package:wal/pages/home/dialog/settings_page.dart';
+import 'package:wal/pages/settings/settings_page.dart';
 import 'package:wal/pages/home/home.dart';
 import 'package:wal/pages/swap/swap.dart';
 import 'package:wal/pages/trending/trending.dart';

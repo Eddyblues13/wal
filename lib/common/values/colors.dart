@@ -8,8 +8,8 @@ class AppColors {
   /// grey background
   static const Color primarySecondaryBackground = Color(0xFFF7F7F9);
 
-  /// main widget color (blue from logo)
-  static const Color primaryElement = Color(0xFF0096D6);
+  /// main widget color (Trust Wallet blue)
+  static const Color primaryElement = Color(0xFF3375BB);
 
   /// main text color black
   static const Color primaryText = Color(0xFF000000);
@@ -29,7 +29,7 @@ class AppColors {
   static const Color primaryFourthElementText = Color(0xFFCCCCCC);
 
   /// state color (blue tone instead of green)
-  static const Color primaryElementStatus = Color(0xFF0096D6);
+  static const Color primaryElementStatus = Color(0xFF3375BB);
 
   /// background color for elements
   static const Color primaryElementBg = Color(0xFFE0F3FB);
@@ -40,7 +40,7 @@ class AppColors {
   static const card = Color(0xFFF8F8F8);
 
   /// ✅ Keep the name primaryColorbut use blue from logo
-  static const Color primaryColor = Color(0xFF0096D6);
+  static const Color primaryColor = Color(0xFF3375BB);
 
   /// text colors
   static const secondaryText = Color(0xFF8E8E8E);
@@ -49,7 +49,7 @@ class AppColors {
 
   /// chip selected colors changed to blue theme
   static const chipSelectedBg = Color(0xFFE6F7FF);
-  static const chipSelectedText = Color(0xFF0096D6);
+  static const chipSelectedText = Color(0xFF3375BB);
 
   static const purpleBadge = Color(0xFFBF2CFF);
 
@@ -58,4 +58,27 @@ class AppColors {
   static const Color white = AppColors.primaryText;
   static const Color divider = Color(0xFFE0E0E0);
   static const Color iconBackground = Color(0xFFF3F3F3);
+
+  // Helper method to get theme-aware colors
+  static Color getBackground(BuildContext context) {
+    return Theme.of(context).scaffoldBackgroundColor;
+  }
+
+  static Color getCardColor(BuildContext context) {
+    return Theme.of(context).cardColor;
+  }
+
+  static Color getPrimaryText(BuildContext context) {
+    return Theme.of(context).colorScheme.onSurface;
+  }
+
+  static Color getSecondaryText(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark
+        ? const Color(0xFFAAAAAA)
+        : secondaryText;
+  }
+
+  static Color getDivider(BuildContext context) {
+    return Theme.of(context).dividerColor;
+  }
 }

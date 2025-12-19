@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:wal/common/values/colors.dart';
 import 'package:wal/pages/home/dialog/notifications_page.dart';
-import 'package:wal/pages/home/dialog/settings_page.dart';
+import 'package:wal/pages/settings/settings_page.dart';
 import 'package:wal/pages/home/dialog/wallet_creation_page.dart';
 
 /// Show a "Trust Wallet style" full-screen wallets modal.

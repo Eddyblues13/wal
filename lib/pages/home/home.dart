@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:wal/common/values/colors.dart';
+import 'package:wal/common/utils/crypto_image_util.dart';
 import 'package:wal/global.dart';
 import 'package:wal/pages/home/bloc/home_bloc.dart';
 import 'package:wal/pages/home/bloc/home_event.dart';
 import 'package:wal/pages/home/bloc/home_state.dart';
+import 'package:wal/pages/home/home_controller.dart';
 import 'package:wal/pages/home/dialog/historyPage.dart';
-import 'package:wal/pages/home/dialog/receive_crypto_page.dart';
-import 'package:wal/pages/home/dialog/send_crypto_page.dart';
-import 'package:wal/pages/home/dialog/settings_page.dart';
-import 'package:wal/pages/home/dialog/swap_crypto_page.dart';
+import 'package:wal/pages/receive/receive_crypto_page.dart';
+import 'package:wal/pages/send/send_crypto_page.dart';
+import 'package:wal/pages/settings/settings_page.dart';
+import 'package:wal/pages/swap/swap_crypto_page.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -20,6 +23,8 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
+  bool _hasInitialized = false;
+
   @override
   void initState() {
     super.initState();
@@ -27,9 +32,6 @@ class _HomeState extends State<Home> {
     // Debug storage before loading data
     print('🏠 Home Screen - Initializing...');
     Global.storageService.debugStorage();
-
-    // Load data when home screen initializes
-    context.read<HomeBloc>().add(const HomeLoadData());
   }
 
   void _showSendCryptoPage(BuildContext context) {
@@ -66,67 +68,86 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<HomeBloc, HomeState>(
-      listener: (context, state) {
-        // Show error snackbar when API error occurs
-        if (state.apiError.isNotEmpty) {
-          _showErrorSnackBar(context, state.apiError);
-        }
-      },
-      builder: (context, state) {
-        return Scaffold(
-          backgroundColor: AppColors.background,
-          body: SafeArea(
-            child: Column(
-              children: [
-                Expanded(
-                  child: RefreshIndicator(
-                    onRefresh: () async {
-                      // Refresh data when pull-to-refresh
-                      context.read<HomeBloc>().add(const HomeRefreshData());
-                      await Future.delayed(const Duration(seconds: 1));
-                    },
-                    child: SingleChildScrollView(
-                      padding: EdgeInsets.symmetric(horizontal: 16.w),
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildMainWalletHeader(context, state),
-                          SizedBox(height: 20.h),
-                          _buildMainWallet(state),
-                          SizedBox(height: 24.h),
-                          _buildWalletActions(context),
-                          SizedBox(height: 24.h),
-                          _buildCryptoView(context, state),
-                          SizedBox(height: 24.h),
-                          _buildRecentTransactions(context, state),
-                          SizedBox(height: 24.h),
-                          // _buildWalletInfo(state),
-                          // SizedBox(height: 40.h),
-                        ],
+    return BlocProvider(
+      create: (context) => HomeBloc(),
+      child: Builder(
+        builder: (blocContext) {
+          // Load home data once when bloc is available
+          if (!_hasInitialized) {
+            _hasInitialized = true;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted && blocContext.mounted) {
+                HomeController(context: blocContext).loadHomeData();
+              }
+            });
+          }
+
+          return BlocConsumer<HomeBloc, HomeState>(
+            listener: (context, state) {
+              // Show error snackbar when API error occurs
+              if (state.apiError.isNotEmpty) {
+                _showErrorSnackBar(context, state.apiError);
+              }
+            },
+            builder: (context, state) {
+              return Scaffold(
+                backgroundColor: AppColors.background,
+                body: SafeArea(
+                  child: Column(
+                    children: [
+                      Expanded(
+                        child: RefreshIndicator(
+                          onRefresh: () async {
+                            // Refresh data when pull-to-refresh
+                            HomeController(
+                              context: blocContext,
+                            ).refreshHomeData();
+                            await Future.delayed(const Duration(seconds: 1));
+                          },
+                          child: SingleChildScrollView(
+                            padding: EdgeInsets.symmetric(horizontal: 16.w),
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildMainWalletHeader(context, state),
+                                SizedBox(height: 20.h),
+                                _buildMainWallet(state),
+                                SizedBox(height: 24.h),
+                                _buildWalletActions(context),
+                                SizedBox(height: 24.h),
+                                _buildCryptoView(context, state),
+                                SizedBox(height: 24.h),
+                                _buildRecentTransactions(context, state),
+                                SizedBox(height: 24.h),
+                                // _buildWalletInfo(state),
+                                // SizedBox(height: 40.h),
+                              ],
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
-          // Refresh floating action button
-          floatingActionButton: FloatingActionButton(
-            onPressed: () {
-              context.read<HomeBloc>().add(const HomeRefreshData());
+                // Refresh floating action button
+                floatingActionButton: FloatingActionButton(
+                  onPressed: () {
+                    HomeController(context: blocContext).refreshHomeData();
+                  },
+                  backgroundColor: AppColors.primaryColor,
+                  mini: true,
+                  child: Icon(
+                    state.isLoading ? Icons.hourglass_top : Icons.refresh,
+                    color: Colors.black,
+                    size: 20.sp,
+                  ),
+                ),
+              );
             },
-            backgroundColor: AppColors.primaryColor,
-            mini: true,
-            child: Icon(
-              state.isLoading ? Icons.hourglass_top : Icons.refresh,
-              color: Colors.black,
-              size: 20.sp,
-            ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 
@@ -370,19 +391,32 @@ class _HomeState extends State<Home> {
             decoration: BoxDecoration(
               color: isActive ? AppColors.primaryColor : AppColors.card,
               borderRadius: BorderRadius.circular(16.r),
+              border: Border.all(
+                color: isActive
+                    ? AppColors.primaryColor
+                    : AppColors.muted.withOpacity(0.3),
+                width: isActive ? 2 : 1.5,
+              ),
               boxShadow: isActive
                   ? [
                       BoxShadow(
-                        color: AppColors.primaryColor.withOpacity(0.3),
-                        blurRadius: 8,
+                        color: AppColors.primaryColor.withOpacity(0.4),
+                        blurRadius: 12,
                         offset: const Offset(0, 4),
+                        spreadRadius: 0,
                       ),
                     ]
-                  : null,
+                  : [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 4,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
             ),
             child: Icon(
               icon,
-              color: isActive ? Colors.black : AppColors.secondaryText,
+              color: isActive ? Colors.white : AppColors.secondaryText,
               size: 24.sp,
             ),
           ),
@@ -390,9 +424,9 @@ class _HomeState extends State<Home> {
           Text(
             label,
             style: TextStyle(
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w600,
               fontSize: 12.sp,
-              color: AppColors.secondaryText,
+              color: AppColors.primaryText,
             ),
           ),
         ],
@@ -614,6 +648,15 @@ class _HomeState extends State<Home> {
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: AppColors.muted.withOpacity(0.4), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -673,39 +716,26 @@ class _HomeState extends State<Home> {
     final iconUrl = asset['icon'];
     final symbol = asset['symbol'] ?? '?';
 
-    if (iconUrl != null && iconUrl is String && iconUrl.isNotEmpty) {
-      return CircleAvatar(
-        radius: 20.r,
-        backgroundColor: AppColors.primaryColor.withOpacity(0.1),
-        backgroundImage: NetworkImage(iconUrl),
-        onBackgroundImageError: (exception, stackTrace) {
-          // Fallback to text if image fails to load
-        },
-        child: iconUrl.contains('placeholder') || iconUrl.isEmpty
-            ? Text(
-                symbol.length > 3 ? symbol.substring(0, 3) : symbol,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primaryColor,
-                  fontSize: 10.sp,
-                ),
-              )
-            : null,
-      );
-    }
+    // Get online image URL
+    final imageUrl = CryptoImageUtil.getImageUrl(symbol, customUrl: iconUrl);
 
-    // Fallback to text avatar
     return CircleAvatar(
       radius: 20.r,
       backgroundColor: AppColors.primaryColor.withOpacity(0.1),
-      child: Text(
-        symbol.length > 3 ? symbol.substring(0, 3) : symbol,
-        style: TextStyle(
-          fontWeight: FontWeight.bold,
-          color: AppColors.primaryColor,
-          fontSize: 10.sp,
-        ),
-      ),
+      backgroundImage: NetworkImage(imageUrl),
+      onBackgroundImageError: (exception, stackTrace) {
+        // Fallback to text if image fails to load
+      },
+      child: imageUrl.contains('placeholder') || imageUrl.isEmpty
+          ? Text(
+              symbol.length > 3 ? symbol.substring(0, 3) : symbol,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryColor,
+                fontSize: 10.sp,
+              ),
+            )
+          : null,
     );
   }
 
@@ -782,6 +812,15 @@ class _HomeState extends State<Home> {
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(16.r),
+        border: Border.all(color: AppColors.muted.withOpacity(0.4), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -790,14 +829,20 @@ class _HomeState extends State<Home> {
             width: 42.w,
             height: 42.h,
             decoration: BoxDecoration(
-              color: AppColors.muted.withOpacity(0.06),
+              color: isReceive
+                  ? AppColors.primaryColor
+                  : AppColors.muted.withOpacity(0.1),
               borderRadius: BorderRadius.circular(10.r),
+              border: Border.all(
+                color: isReceive
+                    ? AppColors.primaryColor
+                    : AppColors.muted.withOpacity(0.2),
+                width: 1,
+              ),
             ),
             child: Icon(
               isReceive ? Icons.arrow_downward : Icons.arrow_upward,
-              color: isReceive
-                  ? AppColors.primaryColor
-                  : AppColors.secondaryText,
+              color: isReceive ? Colors.white : AppColors.secondaryText,
               size: 20.sp,
             ),
           ),
@@ -812,13 +857,13 @@ class _HomeState extends State<Home> {
                     // Coin avatar
                     CircleAvatar(
                       radius: 16.r,
-                      backgroundColor: AppColors.primaryColor.withOpacity(0.12),
+                      backgroundColor: AppColors.primaryColor,
                       child: Text(
                         coin.length > 4 ? coin.substring(0, 4) : coin,
                         style: TextStyle(
                           fontSize: 11.sp,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.primaryColor,
+                          color: Colors.white,
                         ),
                       ),
                     ),
@@ -1008,11 +1053,13 @@ class _HomeState extends State<Home> {
   }
 
   void _copyToClipboard(BuildContext context, String text) {
-    // In a real app, use clipboard package
-    // For now, show a snackbar
+    Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Copied to clipboard: ${_getShortWalletAddress(text)}'),
+        content: Text(
+          'Copied to clipboard: ${_getShortWalletAddress(text)}',
+          style: TextStyle(color: Colors.white, fontSize: 14.sp),
+        ),
         backgroundColor: AppColors.primaryColor,
         duration: const Duration(seconds: 2),
       ),

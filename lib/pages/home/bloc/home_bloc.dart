@@ -1,6 +1,6 @@
+// home_bloc.dart
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:wal/common/apis/wallet_api.dart';
-import 'package:wal/common/apis/history_api.dart'; // ADD THIS IMPORT
+import 'package:wal/common/apis/home_api.dart';
 import 'package:wal/global.dart';
 import 'package:wal/pages/home/bloc/home_event.dart';
 import 'package:wal/pages/home/bloc/home_state.dart';
@@ -37,9 +37,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
 
       if (walletAddress.isEmpty) {
         print('⚠️ HomeBloc - No wallet address found in storage!');
-
-        // Use demo data immediately
-        _loadDemoData(emit);
+        // Use default data immediately
+        _loadDefaultData(emit);
       } else {
         print('🚀 HomeBloc - Found wallet, loading data...');
 
@@ -63,6 +62,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
           apiError: 'Failed to load wallet data: ${e.toString()}',
         ),
       );
+      // Load default data on error
+      _loadDefaultData(emit);
     }
   }
 
@@ -71,130 +72,84 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     Emitter<HomeState> emit,
   ) async {
     try {
-      print('💰 HomeBloc - Fetching wallet balance from API...');
+      print('💰 HomeBloc - Fetching home data from API...');
 
-      final walletData = await WalletAPI.getWalletBalance(event.walletAddress);
+      // Use HomeAPI which handles errors and returns default data
+      final homeData = await HomeAPI.getHomeData(event.walletAddress);
 
-      if (walletData.containsKey('error')) {
-        emit(state.copyWith(isLoading: false, apiError: walletData['error']));
-        return;
-      }
-
-      final totalPortfolio =
-          (walletData['total_portfolio_usdt'] as num?)?.toDouble() ?? 0.0;
-      final assets =
-          (walletData['assets'] as List?)?.cast<Map<String, dynamic>>() ?? [];
-      final cryptoAssets = _convertApiAssetsToAppFormat(assets);
-
-      // NEW: Load recent transactions
-      print('📜 HomeBloc - Fetching transaction history...');
-      final transactionData = await HistoryAPI.getTransactionHistory(
-        event.walletAddress,
-      );
-
-      List<Map<String, dynamic>> recentTransactions = [];
-
-      if (transactionData.containsKey('error')) {
-        print(
-          '⚠️ HomeBloc - Failed to load transactions: ${transactionData['error']}',
-        );
-        // Continue without transactions, don't fail the whole load
-      } else {
-        recentTransactions =
-            (transactionData['transactions'] as List?)
-                ?.cast<Map<String, dynamic>>()
-                .take(5) // Get only last 5 transactions
-                .toList() ??
-            [];
-        print(
-          '✅ HomeBloc - Loaded ${recentTransactions.length} recent transactions',
-        );
-      }
+      // Extract data from response
+      final balance = (homeData['balance'] as num?)?.toDouble() ?? 0.0;
+      final portfolioValue = (homeData['portfolioValue'] as num?)?.toDouble() ?? 0.0;
+      final portfolioChange = (homeData['portfolioChange'] as num?)?.toDouble() ?? 0.0;
+      final cryptoAssets = (homeData['cryptoAssets'] as List?)
+          ?.cast<Map<String, dynamic>>() ?? [];
+      final recentTransactions = (homeData['recentTransactions'] as List?)
+          ?.cast<Map<String, dynamic>>() ?? [];
+      final userProfile = homeData['userProfile'] as Map<String, dynamic>?;
+      final referralCode = homeData['referralCode']?.toString() ?? '';
 
       emit(
         state.copyWith(
           isLoading: false,
-          balance: totalPortfolio,
-          portfolioValue: totalPortfolio,
+          balance: balance,
+          portfolioValue: portfolioValue,
+          portfolioChange: portfolioChange,
           cryptoAssets: cryptoAssets,
-          recentTransactions:
-              recentTransactions, // NEW: Add transactions to state
+          recentTransactions: recentTransactions,
+          userProfile: userProfile,
+          referralCode: referralCode,
           apiError: '',
         ),
       );
 
       print(
-        '✅ Wallet data loaded: \$$totalPortfolio, ${cryptoAssets.length} assets, ${recentTransactions.length} recent transactions',
+        '✅ Home data loaded: \$$balance, ${cryptoAssets.length} assets, ${recentTransactions.length} recent transactions',
       );
-
-      // Load profile after successful wallet data load
-      add(const HomeLoadProfile());
     } catch (e) {
       print('❌ HomeBloc - Error in _onLoadWalletData: $e');
-      emit(
-        state.copyWith(
-          isLoading: false,
-          apiError: 'Failed to fetch wallet data: ${e.toString()}',
-        ),
-      );
+      // Load default data on error
+      _loadDefaultData(emit);
     }
   }
 
-  void _loadDemoData(Emitter<HomeState> emit) {
-    // NEW: Add demo transactions for when no wallet is available
-    final demoTransactions = [
-      {
-        'date': '25-11-03 11:54',
-        'coin': 'Starcoin',
-        'amount': 10.0,
-        'hash':
-            'e4e3a315a7489160d25b80adbe566dcb92b711a30870fe5d1567f687d6dbc4fe',
-        'explorer':
-            'https://tonviewer.com/transaction/e4e3a315a7489160d25b80adbe566dcb92b711a30870fe5d1567f687d6dbc4fe',
-      },
-      {
-        'date': '25-11-03 11:51',
-        'coin': 'TON',
-        'amount': 0.5,
-        'hash':
-            'a6b14e9331b23f1f0e42dc87b84c1d0706bc71fba7c9438cc021c8d6ae8e8690',
-        'explorer':
-            'https://tonviewer.com/transaction/a6b14e9331b23f1f0e42dc87b84c1d0706bc71fba7c9438cc021c8d6ae8e8690',
-      },
-    ];
+  void _loadDefaultData(Emitter<HomeState> emit) {
+    print('📋 HomeBloc - Loading default data');
+    
+    final defaultData = HomeAPI.getHomeData("default");
+    
+    defaultData.then((homeData) {
+      final balance = (homeData['balance'] as num?)?.toDouble() ?? 0.0;
+      final portfolioValue = (homeData['portfolioValue'] as num?)?.toDouble() ?? 0.0;
+      final portfolioChange = (homeData['portfolioChange'] as num?)?.toDouble() ?? 0.0;
+      final cryptoAssets = (homeData['cryptoAssets'] as List?)
+          ?.cast<Map<String, dynamic>>() ?? [];
+      final recentTransactions = (homeData['recentTransactions'] as List?)
+          ?.cast<Map<String, dynamic>>() ?? [];
+      final userProfile = homeData['userProfile'] as Map<String, dynamic>?;
+      final referralCode = homeData['referralCode']?.toString() ?? '';
 
-    emit(
-      state.copyWith(
-        isLoading: false,
-        balance: 12560.75,
-        portfolioValue: 3560.25,
-        portfolioChange: 2.34,
-        cryptoAssets: [
-          {
-            'symbol': 'BTC',
-            'name': 'Bitcoin',
-            'amount': '0.005 BTC',
-            'value': '\$225',
-            'change': '+2.3%',
-            'network': 'Bitcoin',
-            'balance': 0.005,
-          },
-          {
-            'symbol': 'ETH',
-            'name': 'Ethereum',
-            'amount': '0.15 ETH',
-            'value': '\$350',
-            'change': '+1.2%',
-            'network': 'Ethereum',
-            'balance': 0.15,
-          },
-        ],
-        recentTransactions: demoTransactions, // NEW: Add demo transactions
-      ),
-    );
-
-    // Load profile for demo data too
-    add(const HomeLoadProfile());
+      emit(
+        state.copyWith(
+          isLoading: false,
+          balance: balance,
+          portfolioValue: portfolioValue,
+          portfolioChange: portfolioChange,
+          cryptoAssets: cryptoAssets,
+          recentTransactions: recentTransactions,
+          userProfile: userProfile,
+          referralCode: referralCode,
+          apiError: '',
+        ),
+      );
+    }).catchError((e) {
+      print('❌ Error loading default data: $e');
+      emit(
+        state.copyWith(
+          isLoading: false,
+          apiError: 'Failed to load data',
+        ),
+      );
+    });
   }
 
   // Refresh data
@@ -207,45 +162,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     }
   }
 
-  // Helper: Convert API assets to app format
-  List<Map<String, dynamic>> _convertApiAssetsToAppFormat(
-    List<Map<String, dynamic>> apiAssets,
-  ) {
-    return apiAssets.map((asset) {
-      final balance = (asset['balance'] as num?)?.toDouble() ?? 0.0;
-      final price = (asset['price_usdt'] as num?)?.toDouble() ?? 0.0;
-      final value = (asset['value_usdt'] as num?)?.toDouble() ?? 0.0;
-      final change = price > 0
-          ? ((value - (balance * price)) / (balance * price)) * 100
-          : 0.0;
-
-      return {
-        'symbol': asset['symbol'] ?? 'Unknown',
-        'name': asset['name'] ?? 'Unknown Asset',
-        'amount': '${balance.toStringAsFixed(4)} ${asset['symbol'] ?? ''}',
-        'value': '\$${value.toStringAsFixed(2)}',
-        'change': '${change >= 0 ? '+' : ''}${change.toStringAsFixed(2)}%',
-        'network': 'TON',
-        'balance': balance,
-        'price_usdt': price,
-        'icon': asset['icon'],
-        'contract': asset['contract'],
-      };
-    }).toList();
-  }
-
   void _onLoadProfile(HomeLoadProfile event, Emitter<HomeState> emit) {
-    final userProfile = {
-      'name': 'John Doe',
-      'email': 'john.doe@example.com',
-      'joinDate': '2023-01-15',
-      'level': 'Gold Member',
-      'avatarUrl': '',
-    };
-
-    const referralCode = 'WALLET2024';
-
-    emit(state.copyWith(userProfile: userProfile, referralCode: referralCode));
+    // Profile is already loaded with home data
+    // This is kept for backward compatibility
   }
 
   void _onCopyReferralCode(
@@ -253,6 +172,13 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     Emitter<HomeState> emit,
   ) {
     emit(state.copyWith(isReferralCodeCopied: true));
+    
+    // Reset after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!isClosed) {
+        emit(state.copyWith(isReferralCodeCopied: false));
+      }
+    });
   }
 
   void _onTabChanged(HomeTabChanged event, Emitter<HomeState> emit) {

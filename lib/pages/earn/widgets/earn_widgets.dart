@@ -186,7 +186,7 @@ class StakingPackageTile extends StatelessWidget {
                         child: Text(
                           chain,
                           style: TextStyle(
-                            color: AppColors.primaryText,
+                            color: Colors.white,
                             fontSize: 11.sp,
                             fontWeight: FontWeight.w700,
                           ),
@@ -223,7 +223,7 @@ class StakingPackageTile extends StatelessWidget {
               child: Text(
                 'Stake',
                 style: TextStyle(
-                  color: AppColors.primaryText,
+                  color: Colors.white,
                   fontSize: 14.sp,
                   fontWeight: FontWeight.w600,
                 ),
@@ -243,6 +243,8 @@ class StakingPositionTile extends StatelessWidget {
   final String dailyReward;
   final String totalEarned;
   final String daysRemaining;
+  final String? positionId;
+  final VoidCallback? onClaim;
 
   const StakingPositionTile({
     Key? key,
@@ -251,6 +253,8 @@ class StakingPositionTile extends StatelessWidget {
     required this.dailyReward,
     required this.totalEarned,
     required this.daysRemaining,
+    this.positionId,
+    this.onClaim,
   }) : super(key: key);
 
   @override
@@ -317,6 +321,30 @@ class StakingPositionTile extends StatelessWidget {
                 _buildMetric('Total Earned', totalEarned),
               ],
             ),
+            if (onClaim != null) ...[
+              SizedBox(height: 12.h),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: onClaim,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primaryColor,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8.r),
+                    ),
+                    padding: EdgeInsets.symmetric(vertical: 12.h),
+                  ),
+                  child: Text(
+                    'Claim Rewards',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 14.sp,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ],
         ),
       ),

@@ -165,7 +165,7 @@ class NotificationHistoryPage extends StatelessWidget {
       {
         'title': 'Swap Completed',
         'description':
-            'Your swap of 100 TAP to 17 USDT has been completed successfully',
+            'Your swap of 100 STAR to 17 USDT has been completed successfully',
         'time': '2 hours ago',
         'type': 'transaction',
         'isRead': true,
@@ -181,7 +181,7 @@ class NotificationHistoryPage extends StatelessWidget {
       },
       {
         'title': 'Staking Reward',
-        'description': 'You earned 2.5 TAP from staking rewards',
+        'description': 'You earned 2.5 STAR from staking rewards',
         'time': '6 hours ago',
         'type': 'earn',
         'isRead': false,
@@ -232,7 +232,7 @@ class NotificationHistoryPage extends StatelessWidget {
     return [
       {
         'title': 'Network Fee Update',
-        'description': 'Network fees have decreased on TAP transactions',
+        'description': 'Network fees have decreased on STAR transactions',
         'time': '3 days ago',
         'type': 'system',
         'isRead': true,
